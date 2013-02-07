@@ -19,15 +19,17 @@ class OpauthExtension implements ServiceProviderInterface
         'callback_transport' => 'post' // Won't work with silex session
       ), $app['opauth']['config']);
 
-      $init =  function() use ($app) {
-          new Opauth($this->serviceConfig['config']);
+      $config = $this->serviceConfig['config'];
+
+      $init =  function() use ($app, $config) {
+          new Opauth($config);
       };
 
       $app->match($this->serviceConfig['login'] . '/{strategy}', $init);
       $app->match($this->serviceConfig['login'] . '/{strategy}/{return}', $init);
 
-      $app->match($this->serviceConfig['callback'], function(){
-        $Opauth = new Opauth($this->serviceConfig['config'], false );
+      $app->match($this->serviceConfig['callback'], function() use ($config){
+        $Opauth = new Opauth($config, false );
 
       $response = unserialize(base64_decode( $_POST['opauth'] ));
       /**

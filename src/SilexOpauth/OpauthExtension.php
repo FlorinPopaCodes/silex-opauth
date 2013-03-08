@@ -1,80 +1,91 @@
 <?php
 
-namespace SilexOpauth;
+namespace SilexOpauth; // Non psr-0 namespace usage. :(
 
+
+use Opauth;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
-use Opauth; // Non psr-0 namespace usage. :(
+use Symfony\Component\EventDispatcher\GenericEvent;
 
-class OpauthExtension implements ServiceProviderInterface
-{
-    private $serviceConfig;
+class OpauthExtension implements ServiceProviderInterface {
 
-    public function register(Application $app)
-    {
-      $this->serviceConfig = $app['opauth'];
-      $this->serviceConfig['config'] = array_merge(array(
-        'path' => $app['opauth']['login'] . '/',
-        'callback_url' => $app['opauth']['callback'],// Handy shortcut.
-        'callback_transport' => 'post' // Won't work with silex session
-      ), $app['opauth']['config']);
+    /** @var Application */
+    protected $app;
+    protected $serviceConfig;
+    
+    const EVENT_ERROR = 'opauth.error';
+    const EVENT_SUCCESS = 'opauth.success';
 
-      $config = $this->serviceConfig['config'];
-
-      $init =  function() use ($app, $config) {
-          new Opauth($config);
-      };
-
-      $app->match($this->serviceConfig['login'] . '/{strategy}', $init);
-      $app->match($this->serviceConfig['login'] . '/{strategy}/{return}', $init);
-
-      $app->match($this->serviceConfig['callback'], function() use ($config){
-        $Opauth = new Opauth($config, false );
-
-      $response = unserialize(base64_decode( $_POST['opauth'] ));
-
-      $failureReason = null;
-      /**
-       * Check if it's an error callback
-       */
-      if (array_key_exists('error', $response)){
-        echo '<strong style="color: red;">Authentication error: </strong> Opauth returns error auth response.'."<br>\n";
-      }
-
-      /**
-       * Auth response validation
-       *
-       * To validate that the auth response received is unaltered, especially auth response that
-       * is sent through GET or POST.
-       */
-      else{
-        if (empty($response['auth']) || empty($response['timestamp']) || empty($response['signature']) || empty($response['auth']['provider']) || empty($response['auth']['uid'])){
-          echo '<strong style="color: red;">Invalid auth response: </strong>Missing key auth response components.'."<br>\n";
-        }
-        elseif (!$Opauth->validate(sha1(print_r($response['auth'], true)), $response['timestamp'], $response['signature'], $failureReason)){
-          echo '<strong style="color: red;">Invalid auth response: </strong>'.$failureReason.".<br>\n";
-        }
-        else{
-          echo '<strong style="color: green;">OK: </strong>Auth response is validated.'."<br>\n";
-
-          /**
-           * It's all good. Go ahead with your application-specific authentication logic
-           */
-        }
-      }
-
-
-      /**
-      * Auth response dump
-      */
-      echo "<pre>";
-      print_r($response);
-      echo "</pre>";
-
-      });
+    public function register(Application $app) {
+        $this->app = $app;
+        $this->serviceConfig = $app['opauth'];
+        $this->serviceConfig['config'] = array_merge(
+                array(
+                    'path' => $app['opauth']['login'] . '/',
+                    'callback_url' => $app['opauth']['callback'], // Handy shortcut.
+                    'callback_transport' => 'post' // Won't work with silex session
+                ), $app['opauth']['config']
+            );
+        
+        $app->match($this->serviceConfig['callback'], function() { return $this->loginCallback(); });
+        
+        $app->match($this->serviceConfig['login'] . '/{strategy}', function() { return $this->loginAction(); });
+        $app->match($this->serviceConfig['login'] . '/{strategy}/{return}', function() { return $this->loginAction(); });
 
     }
-    public function boot(Application $app)
-    {
+
+    protected function loginAction() {
+        new Opauth($this->serviceConfig['config']);
+        return '';
     }
+    
+    protected function loginCallback() {
+        $Opauth = new Opauth($this->serviceConfig['config'], false);
+
+        $response = unserialize(base64_decode($_POST['opauth']));
+
+        $failureReason = null;
+        /**
+         * Check if it's an error callback
+         */
+        if (array_key_exists('error', $response)) {
+            return $this->onAuthenticationError($response['error'], $response);
+        }
+
+        /**
+         * Auth response validation
+         *
+         * To validate that the auth response received is unaltered, especially auth response that
+         * is sent through GET or POST.
+         */ else {
+            if (empty($response['auth']) || empty($response['timestamp']) || empty($response['signature']) || empty($response['auth']['provider']) || empty($response['auth']['uid'])) {
+                return $this->onAuthenticationError('Missing key auth response components', $response);
+            } elseif (!$Opauth->validate(sha1(print_r($response['auth'], true)), $response['timestamp'], $response['signature'], $failureReason)) {
+                return $this->onAuthenticationError($failureReason, $response);
+            } else {
+                return $this->onAuthenticationSuccess($response);
+            }
+        }
+        
+        return '';
+    }
+
+    protected function onAuthenticationError($message, $response) {
+        $e = new GenericEvent($response, array('message' => $message));
+        $e->setArgument('result', '');
+        return $this->app['dispatcher']->dispatch(self::EVENT_ERROR, $e)->getArgument('result');
+    }
+    
+    protected function onAuthenticationSuccess($response) {
+        $e = new GenericEvent($response);
+        $e->setArgument('result', '');
+        return $this->app['dispatcher']->dispatch(self::EVENT_SUCCESS, $e)->getArgument('result');
+    }
+    
+    public function boot(Application $app) {
+        
+    }
+
+
 }

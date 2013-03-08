@@ -6,7 +6,7 @@
     "version": "dev",
     "licence": "MIT",
     "require": {
-        "opauth/opauth": "0.4.2"
+        "opauth/opauth": "*"
     },
     "require-dev": {
         "silex/silex": "dev-master",

@@ -26,21 +26,25 @@ class OpauthExtension implements ServiceProviderInterface {
                     'callback_url' => $app['opauth']['callback'], // Handy shortcut.
                     'callback_transport' => 'post' // Won't work with silex session
                 ), $app['opauth']['config']
-            );
-        
-        $app->match($this->serviceConfig['callback'], function() { return $this->loginCallback(); });
-        
-        $app->match($this->serviceConfig['login'] . '/{strategy}', function() { return $this->loginAction(); });
-        $app->match($this->serviceConfig['login'] . '/{strategy}/{return}', function() { return $this->loginAction(); });
+              );
+
+        $that = $this;
+        $app->match($this->serviceConfig['callback'], function () use ($that) {
+          return $that->loginCallback();
+        });
+
+        $config = $this->serviceConfig['config'];
+        $init = function () use ($config) {
+            new Opauth($config);
+            return '';
+        };
+
+        $app->match($this->serviceConfig['login'] . '/{strategy}', $init);
+        $app->match($this->serviceConfig['login'] . '/{strategy}/{return}', $init);
 
     }
 
-    protected function loginAction() {
-        new Opauth($this->serviceConfig['config']);
-        return '';
-    }
-    
-    protected function loginCallback() {
+    public function loginCallback() {
         $Opauth = new Opauth($this->serviceConfig['config'], false);
 
         $response = unserialize(base64_decode($_POST['opauth']));

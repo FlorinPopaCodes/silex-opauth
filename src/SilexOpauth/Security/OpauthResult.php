@@ -74,7 +74,8 @@ class OpauthResult implements \Serializable
     {
         return isset($this->auth['info']['nickname']) ? $this->auth['info']['nickname'] : null;
     }
-    
+
+
     public function getPicture()
     {
         return isset($this->auth['info']['image']) ? $this->auth['info']['image'] : null;

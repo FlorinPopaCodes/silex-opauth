@@ -9,17 +9,20 @@ use Silex\ServiceProviderInterface;
 /**
  * @author Rafal Lindemann
  *  */
-class OpauthSilexProvider implements ServiceProviderInterface {
+class OpauthSilexProvider implements ServiceProviderInterface
+{
 
     protected $onBoot = array();
-    
-    public function register(Application $app) {
+
+    public function register(Application $app)
+    {
 
         $this->registerListener($app);
-        
     }
     
-    protected function registerListener(Application $app) {
+    protected function registerListener(Application $app)
+    {
+        
         $app['security.authentication_listener.factory.opauth'] = $app->protect(function ($name, $options) use ($app) {
             
             $options = array_merge_recursive($options, array(
@@ -85,8 +88,9 @@ class OpauthSilexProvider implements ServiceProviderInterface {
     }
 
     
-    public function boot(Application $app) {
-        foreach($this->onBoot as $c) {
+    public function boot(Application $app)
+    {
+        foreach ($this->onBoot as $c) {
             call_user_func($c);
         }
     }

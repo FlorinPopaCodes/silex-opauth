@@ -12,12 +12,14 @@ use Symfony\Component\Security\Core\User\UserProviderInterface;
  *  */
 class OpauthProvider implements AuthenticationProviderInterface
 {
+
     protected $userProvider;
 
     public function __construct(UserProviderInterface $userProvider)
     {
         $this->userProvider = $userProvider;
     }
+
 
     public function authenticate(TokenInterface $token)
     {
@@ -28,7 +30,7 @@ class OpauthProvider implements AuthenticationProviderInterface
             $username = $token->getOpauthResult()->getProvider() . ':' . $token->getOpauthResult()->getUid();
             $user = $this->userProvider->loadUserByUsername($username);
         }
-        
+
         if ($user) {
             $authenticatedToken = new OpauthToken($token->getOpauthResult(), $user->getRoles());
             $authenticatedToken->setUser($user);
@@ -44,4 +46,6 @@ class OpauthProvider implements AuthenticationProviderInterface
     {
         return $token instanceof OpauthToken;
     }
+
+
 }

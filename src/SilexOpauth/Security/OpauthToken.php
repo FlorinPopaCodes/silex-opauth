@@ -1,4 +1,5 @@
 <?php
+
 namespace SilexOpauth\Security;
 
 use Symfony\Component\Security\Core\Authentication\Token\AbstractToken;
@@ -18,15 +19,18 @@ class OpauthToken extends AbstractToken
         $this->setAttribute('opauth', $result);
     }
 
+
     public function getCredentials()
     {
         return '';
     }
-    
+
+
     /** @return OpauthResult */
     public function getOpauthResult()
     {
         return $this->getAttribute('opauth');
     }
+
 
 }

@@ -9,8 +9,7 @@ namespace SilexOpauth\Security;
  */
 interface OpauthUserProviderInterface
 {
-    
+
     function loadUserByOpauthResult(OpauthResult $result);
-    
 }
 

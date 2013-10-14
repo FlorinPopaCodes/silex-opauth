@@ -16,21 +16,21 @@
              ),
         )
       )
-    );    
+    );
 
     // Enable extension
     $app->register(new OpauthExtension());
 
     // Listen for events
-    $app->dispatcher->addListener(OpauthExtension::EVENT_ERROR, function($e) {
+    $app->on(OpauthExtension::EVENT_ERROR, function($e) {
         $this->log->error('Auth error: ' . $e['message'], ['response' => $e->getSubject()]);
         $e->setArgument('result', $this->redirect('/'));
     });
 
-    $app->dispatcher->addListener(OpauthExtension::EVENT_SUCCESS, function($e) {
+    $app->on(OpauthExtension::EVENT_SUCCESS, function($e) {
         $response = $e->getSubject();
 
-        /* 
+        /*
            find/create a user, oauth response is in $response and it's already validated!
            store the user in the session
         */
@@ -69,7 +69,7 @@ To login using opauth use /login/PROVIDER, or use `opauth_default_login` route w
 
 ```
 
-By default, users will be looked up by username "provider:uid". 
+By default, users will be looked up by username "provider:uid".
 
 You should extend your user provider to handle OPauth results correctly by implementing `OpauthUserProviderInterface`.
 

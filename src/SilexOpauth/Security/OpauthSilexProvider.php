@@ -25,12 +25,12 @@ class OpauthSilexProvider implements ServiceProviderInterface
         
         $app['security.authentication_listener.factory.opauth'] = $app->protect(function ($name, $options) use ($app) {
             
-            $options = array_merge_recursive($options, array(
+            $options = array_replace_recursive( array(
                 'check_path' => '/login/opauth',
                 'opauth' => array(
                     'path' => '/login/',
                 )
-            ));
+            ), $options);
             
             if (!isset($app['security.authentication.success_handler.'.$name])) {
                 $app['security.authentication.success_handler.'.$name] = $app['security.authentication.success_handler._proto']($name, $options);

@@ -42,8 +42,8 @@ class OpauthSilexProvider implements ServiceProviderInterface
             
             // define the authentication provider object
             if (!isset($app['security.authentication_provider.'.$name.'.opauth'])) {
-                $app['security.authentication_provider.'.$name.'.opauth'] = $app->share(function () use ($app) {
-                    return new OpauthProvider($app['security.user_provider.default']);
+                $app['security.authentication_provider.'.$name.'.opauth'] = $app->share(function () use ($app, $name) {
+                    return new OpauthProvider($app['security.user_provider.'.$name]);
                 });
             }
 

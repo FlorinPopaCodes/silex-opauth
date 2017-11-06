@@ -47,6 +47,9 @@ class OpauthExtension implements ServiceProviderInterface {
     public function loginCallback() {
         $Opauth = new Opauth($this->serviceConfig['config'], false);
 
+        if (!isset($_POST['opauth']))
+            return $this->onAuthenticationError('Missing auth response', NULL);
+
         $response = unserialize(base64_decode($_POST['opauth']));
 
         $failureReason = null;

@@ -50,7 +50,7 @@ class OpauthExtension implements ServiceProviderInterface {
         if (!isset($_POST['opauth']))
             return $this->onAuthenticationError('Missing auth response', NULL);
 
-        $response = unserialize(base64_decode($_POST['opauth']));
+        $response = json_decode(base64_decode($_POST['opauth']), true);
 
         $failureReason = null;
         /**
